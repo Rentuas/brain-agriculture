@@ -81,7 +81,7 @@
       "src/**/*.controller.ts",
       "src/**/*.service.ts"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "coverage",
     "testEnvironment": "node"
   }
 }
