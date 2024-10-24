@@ -2,17 +2,6 @@ import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateProducersTable1680012345678 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-
-    await queryRunner.query(`
-      CREATE TYPE crop_type_enum AS ENUM (
-        'Soja',
-        'Milho',
-        'Algodão',
-        'Café',
-        'Cana de Açúcar'
-      )
-    `);
-
     await queryRunner.createTable(
       new Table({
         name: 'producers',
@@ -59,22 +48,12 @@ export class CreateProducersTable1680012345678 implements MigrationInterface {
           },
           {
             name: 'agricultural_area',
-            type: 'decimal',
-            precision: 10,
-            scale: 2,
+            type: 'bigint',
             isNullable: false,
           },
           {
             name: 'vegetation_area',
-            type: 'decimal',
-            precision: 10,
-            scale: 2,
-            isNullable: false,
-          },
-          {
-            name: 'crops',
-            type: 'enum',
-            enumName: 'crop_type_enum',
+            type: 'bigint',
             isNullable: false,
           },
           {
@@ -90,12 +69,11 @@ export class CreateProducersTable1680012345678 implements MigrationInterface {
           },
         ],
       }),
-      true
+      true,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropTable('producers');
-    await queryRunner.query(`DROP TYPE crop_type_enum`);
   }
 }

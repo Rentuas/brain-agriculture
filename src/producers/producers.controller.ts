@@ -25,14 +25,14 @@ export class ProducersController {
     return this.producersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.producersService.findOne(id);
-  }
-
   @Get('dashboard')
   getDashboardData() {
     return this.producersService.getDashboardData();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.producersService.findOne(id);
   }
 
   @Patch(':id')

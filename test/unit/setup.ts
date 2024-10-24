@@ -6,6 +6,6 @@ export default () => {
     TYPEORM_PORT: '5432',
     TYPEORM_HOST: 'localhost',
     TYPEORM_USERNAME: 'postgres',
-    TYPEORM_PASSWORD: 'password'
+    TYPEORM_PASSWORD: 'password',
   };
 };

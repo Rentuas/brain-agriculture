@@ -31,7 +31,7 @@ export class ConfigService implements OnModuleInit {
 
     envConfig.nodeEnv = config.NODE_ENV;
     envConfig.httpPort = parseInt(config.HTTP_PORT, 10);
-    
+
     envConfig.typeormHost = config.TYPEORM_HOST;
     envConfig.typeormPort = parseInt(config.TYPEORM_PORT, 10);
     envConfig.typeormDatabase = config.TYPEORM_DATABASE;
@@ -49,5 +49,4 @@ export class ConfigService implements OnModuleInit {
     }
     return envConfig;
   }
-  
 }

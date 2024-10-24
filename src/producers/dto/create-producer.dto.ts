@@ -1,16 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsEnum, Matches } from 'class-validator';
-import { CropType } from '../enums/crop-type';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ArrayNotEmpty,
+  IsUUID,
+  IsInt,
+} from 'class-validator';
+import { Document } from 'src/decorators/document.decorator';
 
-export class CreateProducerDto {
+export class 
+CreateProducerDto {
   @ApiProperty({
     description: 'CPF ou CNPJ do produtor. Deve ser um valor único e válido.',
-    example: '123.456.789-00',
+    example: '12345678900',
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, {
-    message: 'O campo document deve ser um CPF ou CNPJ válido.',
+  @Document({
+    message: 'O campo document deve ser um CPF ou CNPJ válido, sem pontuações.',
   })
   document: string;
 
@@ -48,34 +56,35 @@ export class CreateProducerDto {
 
   @ApiProperty({
     description: 'Área total da fazenda em hectares.',
-    example: 150.5,
+    example: 150,
   })
-  @IsNumber()
+  @IsInt()
   @IsNotEmpty()
   totalArea: number;
 
   @ApiProperty({
     description: 'Área agricultável da fazenda em hectares.',
-    example: 120.0,
+    example: 120,
   })
-  @IsNumber()
+  @IsInt()
   @IsNotEmpty()
   agriculturalArea: number;
 
   @ApiProperty({
     description: 'Área de vegetação da fazenda em hectares.',
-    example: 30.5,
+    example: 30,
   })
-  @IsNumber()
+  @IsInt()
   @IsNotEmpty()
   vegetationArea: number;
 
   @ApiProperty({
-    description: 'Tipo de cultura plantada na fazenda.',
-    example: CropType.Soybean,
-    enum: CropType,
+    description: 'Array de UUIDs das culturas plantadas na fazenda.',
+    example: ['b3a0f023-4e02-4a43-8f3b-1b53f3d1620d', '6a27bc28-8fcf-4ea5-a1a8-21476f002f30'],
+    type: [String],
   })
-  @IsEnum(CropType)
-  @IsNotEmpty()
-  crops: CropType;
+  @IsArray()
+  @ArrayNotEmpty({ message: 'O array de id das culturas plantadas não pode estar vazio.' })
+  @IsUUID('all', { each: true, message: 'Cada cultura deve ser um id válido.' })
+  crops: string[];
 }

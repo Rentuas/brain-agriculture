@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProducersController } from './producers.controller';
-import { ProducersService } from './producers.service';
-import { CreateProducerDto } from './dto/create-producer.dto';
-import { UpdateProducerDto } from './dto/update-producer.dto';
-import { CropType } from './enums/crop-type';
+import { ProducersController } from '../producers.controller';
+import { ProducersService } from '../producers.service';
+import { CreateProducerDto } from '../dto/create-producer.dto';
+import { UpdateProducerDto } from '../dto/update-producer.dto';
 import { Chance } from 'chance';
+import { NotFoundException } from '@nestjs/common';
+import { CropsService } from 'src/crops/crops.service';
 
 const chance = new Chance();
 
@@ -27,6 +28,12 @@ describe('ProducersController', () => {
             getDashboardData: jest.fn(),
           },
         },
+        {
+          provide: CropsService,
+          useValue: {
+            findByIds: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -41,33 +48,54 @@ describe('ProducersController', () => {
   describe('create', () => {
     it('should call service create with the correct parameters', async () => {
       const createProducerDto: CreateProducerDto = {
-        document: chance.cpf(),
+        document: chance.cpf().replace(/\D/g, ''), // Removendo pontuações para garantir que esteja sem formatação
         producerName: chance.name(),
         farmName: chance.company(),
         city: chance.city(),
-        state: chance.state(),
+        state: chance.state({ full: true }),
         totalArea: 100,
         agriculturalArea: 70,
         vegetationArea: 30,
-        crops: CropType.Soybean,
+        crops: [chance.guid(), chance.guid()],
       };
 
-      jest.spyOn(service, 'create').mockResolvedValue(createProducerDto as any);
+      const mockResponse = { ...createProducerDto, id: chance.guid() };
+
+      jest.spyOn(service, 'create').mockResolvedValue(mockResponse as any);
 
       const result = await controller.create(createProducerDto);
 
       expect(service.create).toHaveBeenCalledWith(createProducerDto);
-      expect(result).toEqual(createProducerDto);
+      expect(result).toEqual(mockResponse);
     });
   });
 
   describe('findAll', () => {
     it('should call service findAll', async () => {
-      const producers = [{ id: chance.guid(), producerName: chance.name() }];
-      jest.spyOn(service, 'findAll').mockResolvedValue(producers as any);
-
+      const producers = [
+        {
+          id: chance.guid(),
+          document: chance.cpf().replace(/\D/g, ''),
+          producerName: chance.name(),
+          farmName: chance.company(),
+          city: chance.city(),
+          state: chance.state({ full: true }),
+          totalArea: chance.integer({ min: 100, max: 1000 }),
+          agriculturalArea: chance.integer({ min: 50, max: 500 }),
+          vegetationArea: chance.integer({ min: 10, max: 300 }),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          crops: [
+            { id: chance.guid(), name: 'Soybean' },
+            { id: chance.guid(), name: 'Corn' },
+          ],
+        },
+      ];
+  
+      jest.spyOn(service, 'findAll').mockResolvedValue(producers);
+  
       const result = await controller.findAll();
-
+  
       expect(service.findAll).toHaveBeenCalled();
       expect(result).toEqual(producers);
     });
@@ -75,20 +103,61 @@ describe('ProducersController', () => {
 
   describe('findOne', () => {
     it('should call service findOne with the correct id', async () => {
-      const producer = { id: chance.guid(), producerName: chance.name() };
-      jest.spyOn(service, 'findOne').mockResolvedValue(producer as any);
+      const producer = {
+        id: chance.guid(),
+        document: chance.cpf().replace(/\D/g, ''),
+        producerName: chance.name(),
+        farmName: chance.company(),
+        city: chance.city(),
+        state: chance.state({ full: true }),
+        totalArea: chance.integer({ min: 100, max: 1000 }),
+        agriculturalArea: chance.integer({ min: 50, max: 500 }),
+        vegetationArea: chance.integer({ min: 10, max: 300 }),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        crops: [
+          { id: chance.guid(), name: 'Soybean' },
+          { id: chance.guid(), name: 'Corn' },
+        ],
+      };
+
+      jest.spyOn(service, 'findOne').mockResolvedValue(producer);
 
       const result = await controller.findOne(producer.id);
 
       expect(service.findOne).toHaveBeenCalledWith(producer.id);
       expect(result).toEqual(producer);
     });
+
+    it('should throw an error if producer not found', async () => {
+      jest.spyOn(service, 'findOne').mockRejectedValue(new NotFoundException('Producer not found'));
+
+      await expect(controller.findOne(chance.guid())).rejects.toThrow(
+        'Producer not found',
+      );
+    });
   });
 
   describe('getDashboardData', () => {
     it('should call service getDashboardData', async () => {
-      const dashboardData = { totalFarms: 10, totalArea: 1000 };
-      jest.spyOn(service, 'getDashboardData').mockResolvedValue(dashboardData as any);
+      const dashboardData = {
+        totalFarms: 10,
+        totalArea: 1000,
+        farmsByState: [
+          { state: 'SC', count: 5 },
+          { state: 'SP', count: 3 },
+        ],
+        farmsByCrop: [
+          { crop: 'Soybean', count: 6 },
+          { crop: 'Corn', count: 4 },
+        ],
+        landUsage: {
+          agriculturalArea: 700,
+          vegetationArea: 300,
+        },
+      };
+      
+      jest.spyOn(service, 'getDashboardData').mockResolvedValue(dashboardData);
 
       const result = await controller.getDashboardData();
 
@@ -103,6 +172,7 @@ describe('ProducersController', () => {
         totalArea: 150,
         agriculturalArea: 100,
         vegetationArea: 50,
+        crops: [chance.guid()],
       };
       const producerId = chance.guid();
       const updatedProducer = { id: producerId, ...updateProducerDto };
